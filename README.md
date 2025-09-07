@@ -1,4 +1,62 @@
-# Kakao REST API Java Spring RestClient 예제
+# Kakao API Demo
+
+Spring Boot 기반으로 Kakao API를 연동하고 테스트하기 위한 프로젝트입니다.  
+OAuth2 로그인부터 시작해서 카카오에서 제공하는 다양한 API(사용자 정보, 메시지, 친구 목록 등)를 실험합니다.
+
+## Requirements
+- Java 17+
+- Gradle 8.x (Wrapper 포함)
+- Spring Boot 3.x
+- Kakao Developers 애플리케이션 (REST API 키, Redirect URI 설정 필요)
+
+---
+
+## Getting Started
+
+1. **카카오 개발자 콘솔에서 앱 생성**
+    - [Kakao Developers](https://developers.kakao.com) → 내 애플리케이션 → 앱 키 확인
+    - Redirect URI 등록: `http://localhost:8080/login/oauth2/code/kakao`
+
+2. **환경설정**
+   `src/main/resources/application.yml` 예시:
+   ```yaml
+   spring:
+     security:
+       oauth2:
+         client:
+           registration:
+             kakao:
+               client-id: <REST_API_KEY>
+               client-secret: <CLIENT_SECRET>
+               redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+               authorization-grant-type: authorization_code
+               client-authentication-method: POST
+               scope:
+                 - profile_nickname
+                 - account_email
+           provider:
+             kakao:
+               authorization-uri: https://kauth.kakao.com/oauth/authorize
+               token-uri: https://kauth.kakao.com/oauth/token
+               user-info-uri: https://kapi.kakao.com/v2/user/me
+               user-name-attribute: id
+빌드 및 실행
+
+bash
+코드 복사
+./gradlew clean build
+./gradlew bootRun
+테스트
+
+브라우저에서: http://localhost:8080/oauth2/authorization/kakao
+
+로그인 및 권한 동의 후 사용자 정보 확인 가능
+
+
+
+
+
+# 1. Kakao REST API Java Spring RestClient 예제
 
 이 프로젝트는 Kakao REST API를 Java Spring RestClient 구현한 예제입니다.
 
