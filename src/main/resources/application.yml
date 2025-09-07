@@ -1,13 +1,25 @@
 spring:
   application:
     name: demo
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: 38b80be01bd3beb1ee86c5ace89487ba
+            client-secret: lUkqoKS4fMMHNQyChsdOZB9pnkFvZqCw
+            redirect-uri: http://localhost:8080/login/oauth2/code/kakao
+            authorization-grant-type: authorization_code
+            client-authentication-method: POST
+            scope:
+              - profile_nickname
+              - account_email
+        provider:
+          kakao:
+            authorization-uri: https://kauth.kakao.com/oauth/authorize
+            token-uri: https://kauth.kakao.com/oauth/token
+            user-info-uri: https://kapi.kakao.com/v2/user/me
+            user-name-attribute: id
 
 server:
   port: 8080
-
-kakao:
-  client-id: 38b80be01bd3beb1ee86c5ace89487ba
-  client-secret: lUkqoKS4fMMHNQyChsdOZB9pnkFvZqCw
-  redirect-uri: http://localhost:8080/redirect
-  kauth-host: https://kauth.kakao.com
-  kapi-host: https://kapi.kakao.com
