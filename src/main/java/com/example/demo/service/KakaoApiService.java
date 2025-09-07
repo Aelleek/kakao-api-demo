@@ -3,8 +3,13 @@ package com.example.demo.service;
 import com.example.demo.dto.KakaoTokenResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
@@ -30,6 +35,9 @@ public class KakaoApiService {
     @Value("${kakao.redirect-uri}")
     private String redirectUri;
 
+    @Autowired
+    private OAuth2AuthorizedClientService authorizedClientService;
+
     private final ObjectMapper objectMapper;
     private final RestClient restClient;
 
@@ -47,22 +55,17 @@ public class KakaoApiService {
         return attr.getRequest().getSession();
     }
 
-    private void saveAccessToken(String accessToken) {
-        getSession().setAttribute("access_token", accessToken);
-    }
-
-    private String getAccessToken() {
-        return (String) getSession().getAttribute("access_token");
-    }
-
-    private void invalidateSession() {
-        getSession().invalidate();
-    }
-
     private String call(String method, String urlString, String body) throws Exception {
+        // 현재 인증된 사용자 가져오기
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        OAuth2AuthorizedClient client =
+                authorizedClientService.loadAuthorizedClient("kakao", authentication.getName());
+
+        String accessToken = client.getAccessToken().getTokenValue();
+
         RestClient.RequestBodySpec requestSpec = restClient.method(HttpMethod.valueOf(method))
                 .uri(urlString)
-                .headers(headers -> headers.setBearerAuth(getAccessToken()));
+                .headers(headers -> headers.setBearerAuth(accessToken));
 
         if (body != null) {
             requestSpec.contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -72,53 +75,9 @@ public class KakaoApiService {
             return requestSpec.retrieve()
                     .body(String.class);
         } catch (RestClientResponseException e) {
-
-            // 에러 메시지 (응답 바디)
             String errorBody = e.getResponseBodyAsString();
             System.out.println("Error Body: " + errorBody);
             return errorBody;
-        }
-    }
-
-    public String getAuthUrl(String scope) {
-        return UriComponentsBuilder
-                .fromHttpUrl(kauthHost + "/oauth/authorize")
-                .queryParam("client_id", clientId)
-                .queryParam("redirect_uri", redirectUri)
-                .queryParam("response_type", "code")
-                .queryParamIfPresent("scope", scope != null ? java.util.Optional.of(scope) : java.util.Optional.empty())
-                .build()
-                .toUriString();
-    }
-
-    public boolean handleAuthorizationCallback(String code) {
-        try {
-            KakaoTokenResponse tokenResponse = getToken(code);
-            if (tokenResponse != null) {
-                saveAccessToken(tokenResponse.getAccess_token());
-                return true;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-        return false;
-    }
-
-    private KakaoTokenResponse getToken(String code) throws Exception {
-        String params = String.format("grant_type=authorization_code&client_id=%s&client_secret=%s&code=%s",
-                clientId, clientSecret, code);
-        String response = call("POST", kauthHost + "/oauth/token", params);
-        return objectMapper.readValue(response, KakaoTokenResponse.class);
-    }
-
-    public ResponseEntity<?> getUserProfile() {
-        try {
-            String response = call("GET", kapiHost + "/v2/user/me", null);
-            return ResponseEntity.ok(objectMapper.readValue(response, Object.class));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.internalServerError().build();
         }
     }
 
@@ -157,7 +116,6 @@ public class KakaoApiService {
     public ResponseEntity<?> logout() {
         try {
             String response = call("POST", kapiHost + "/v1/user/logout", null);
-            invalidateSession();
             return ResponseEntity.ok(objectMapper.readValue(response, Object.class));
         } catch (Exception e) {
             e.printStackTrace();
@@ -168,7 +126,6 @@ public class KakaoApiService {
     public ResponseEntity<?> unlink() {
         try {
             String response = call("POST", kapiHost + "/v1/user/unlink", null);
-            invalidateSession();
             return ResponseEntity.ok(objectMapper.readValue(response, Object.class));
         } catch (Exception e) {
             e.printStackTrace();
