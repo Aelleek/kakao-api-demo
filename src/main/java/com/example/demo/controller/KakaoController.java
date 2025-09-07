@@ -18,16 +18,6 @@ public class KakaoController {
         this.kakaoApiService = kakaoApiService;
     }
 
-    @GetMapping("/authorize")
-    public RedirectView authorize(@RequestParam(required = false) String scope) {
-        return new RedirectView(kakaoApiService.getAuthUrl(scope));
-    }
-
-    @GetMapping("/profile")
-    public ResponseEntity<?> getProfile() {
-        return kakaoApiService.getUserProfile();
-    }
-
     @GetMapping("/friends")
     public ResponseEntity<?> getFriends() {
         return kakaoApiService.getFriends();
