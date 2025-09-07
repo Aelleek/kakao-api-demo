@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: demo
+
+server:
+  port: 8080
+
+kakao:
+  client-id: 38b80be01bd3beb1ee86c5ace89487ba
+  client-secret: lUkqoKS4fMMHNQyChsdOZB9pnkFvZqCw
+  redirect-uri: http://localhost:8080/redirect
+  kauth-host: https://kauth.kakao.com
+  kapi-host: https://kapi.kakao.com
