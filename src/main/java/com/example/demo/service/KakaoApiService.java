@@ -20,20 +20,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @Service
 public class KakaoApiService {
 
-    @Value("${kakao.client-id}")
-    private String clientId;
-
-    @Value("${kakao.client-secret}")
-    private String clientSecret;
-
-    @Value("${kakao.kauth-host}")
-    private String kauthHost;
-
-    @Value("${kakao.kapi-host}")
     private String kapiHost;
-
-    @Value("${kakao.redirect-uri}")
-    private String redirectUri;
 
     @Autowired
     private OAuth2AuthorizedClientService authorizedClientService;
@@ -41,9 +28,14 @@ public class KakaoApiService {
     private final ObjectMapper objectMapper;
     private final RestClient restClient;
 
-    public KakaoApiService(ObjectMapper objectMapper, RestClient.Builder restClientBuilder) {
+    public KakaoApiService(ObjectMapper objectMapper,
+                           RestClient.Builder restClientBuilder,
+                           OAuth2AuthorizedClientService authorizedClientService,
+                           @Value("${kakao.api-host}") String kapiHost) {
         this.objectMapper = objectMapper;
         this.restClient = restClientBuilder.baseUrl(kapiHost).build();
+        this.authorizedClientService = authorizedClientService;
+        this.kapiHost = kapiHost;
     }
 
     public String createDefaultMessage() {
