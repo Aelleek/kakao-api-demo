@@ -4,6 +4,10 @@ import com.example.demo.service.KakaoApiService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.core.user.OAuth2User;
+
+import java.util.Map;
 
 @RestController
 public class KakaoController {
@@ -17,12 +21,6 @@ public class KakaoController {
     @GetMapping("/authorize")
     public RedirectView authorize(@RequestParam(required = false) String scope) {
         return new RedirectView(kakaoApiService.getAuthUrl(scope));
-    }
-
-    @GetMapping("/redirect")
-    public RedirectView handleRedirect(@RequestParam String code) {
-        boolean isSuccess = kakaoApiService.handleAuthorizationCallback(code);
-        return new RedirectView("/index.html?login=" + (isSuccess ? "success" : "error"));
     }
 
     @GetMapping("/profile")
@@ -53,5 +51,10 @@ public class KakaoController {
     @GetMapping("/unlink")
     public ResponseEntity<?> unlink() {
         return kakaoApiService.unlink();
+    }
+
+    @GetMapping("/user")
+    public Map<String, Object> user(@AuthenticationPrincipal OAuth2User principal) {
+        return principal.getAttributes(); // 카카오에서 내려준 사용자 정보(JSON 그대로)
     }
 }
